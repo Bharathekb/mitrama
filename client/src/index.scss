@@ -1,0 +1,240 @@
+$font-family: "Inter", sans-serif;
+$font-url: "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap";
+
+$font-400: 400;
+$font-500: 500;
+$font-600: 600;
+$font-700: 700;
+$font-800: 800;
+
+$heading-color: #18181b;
+$heading-white: #fafafa;
+$primary-color: #3ca55c;
+$primary-hover: #2e8b57;
+$text-color: #333;
+$input-border: #ccc;
+$login-blue: #007bff;
+$disabled-gray: #aaa;
+
+// IMPORT FONT
+@import url($font-url);
+
+// RESET
+* {
+  padding: 0;
+  margin: 0;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: $font-family;
+  font-weight: $font-400;
+  color: $text-color;
+  overflow: hidden;
+}
+
+.Main-container {
+  position: relative;
+  width: 400px;
+  height: 100vh;
+  overflow: hidden;
+  margin: auto;
+  -webkit-box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px,
+    rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px,
+    rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+  border: 1px solid #e2e8f0;
+}
+
+.login-body {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  height: 100vh;
+}
+
+// FONT WEIGHT UTILS
+.Fw-400 {
+  font-weight: $font-400;
+}
+
+.Fw-500 {
+  font-weight: $font-500;
+}
+
+.Fw-600 {
+  font-weight: $font-600;
+}
+
+.Fw-700 {
+  font-weight: $font-700;
+}
+
+.Fw-800 {
+  font-weight: $font-800;
+}
+
+.white-heading {
+  color: $heading-white !important;
+}
+
+.Heading-1 {
+  color: $heading-color;
+  font-family: Inter;
+  font-size: 50px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 50px;
+}
+
+.Heading-2 {
+  color: $heading-color;
+  font-family: Inter;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 40px;
+}
+
+.Heading-3 {
+  color: $heading-color;
+  font-family: Inter;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 30px;
+}
+
+.btn {
+  color: #18181b;
+  padding: 9px 16px;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 24px;
+  border-radius: 6px;
+  border: 1px solid #e4e4e7;
+  background: #fff;
+}
+
+.btn:hover {
+  border: 1px solid #e4e4e7;
+  color: #fafafa;
+  background-color: #18181b;
+}
+.navbar {
+  position: relative;
+  width: 100%;
+  z-index: 1050;
+  -webkit-box-pack: justify;
+  -ms-flex-pack: justify;
+  justify-content: space-between;
+  background-color: #fff;
+  border-bottom: 1px solid #e4e4e7;
+}
+.navbar-nav .dropdown-menu {
+  position: absolute;
+}
+.navbar-nav .dropdown-menu li {
+  padding: 4px 10px;
+  border-bottom: 1px solid #e4e4e7;
+  cursor: pointer;
+}
+.navbar-nav .dropdown-menu li:last-child {
+  border: none;
+}
+.dropdown-toggle {
+  padding: 6px 16px;
+  background: #fff;
+  border: none;
+}
+.dropdown-toggle img {
+  width: 24px;
+}
+.dropdown-toggle::after {
+  display: none !important;
+}
+.My-form {
+  width: 100%;
+  margin: auto;
+}
+.My-formbtn {
+  color: #fafafa;
+  background-color: #18181b;
+}
+.My-FormContainer {
+  width: 100%;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-align: start;
+  -ms-flex-align: start;
+  align-items: flex-start;
+  margin: auto;
+  gap: 24px;
+  padding: 32px;
+}
+
+.My-Formbox {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  gap: 24px;
+  width: 100%;
+}
+
+.My-label {
+  color: #18181b;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 100%;
+  margin-bottom: 8px;
+}
+
+.My-redstar {
+  color: #dc2626;
+}
+
+.form-control {
+  color: #212529;
+  font-size: 14px;
+  line-height: 20px;
+  padding: 9px 12px;
+  border-radius: 6px;
+  border: 1px solid #e4e4e7;
+  background: #fff;
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+  -ms-border-radius: 6px;
+  -o-border-radius: 6px;
+}
+
+.form-control::-webkit-input-placeholder {
+  color: #71717a;
+}
+
+.form-control::-moz-placeholder {
+  color: #71717a;
+}
+
+.form-control:-ms-input-placeholder {
+  color: #71717a;
+}
+
+.form-control::-ms-input-placeholder {
+  color: #71717a;
+}
+
+.form-control::placeholder {
+  color: #71717a;
+}
