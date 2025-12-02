@@ -12,3 +12,4 @@ yarn-error.log
 # Ignore build folders
 client/build/
 server/dist/
+server-copy/
