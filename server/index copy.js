@@ -77,21 +77,6 @@ app.get("/main", middleware, async (req, res) => {
     res.status(500).send("Server error");
   }
 });
-
-app.delete("/delete-account",middleware,async (req,res)=>{
-  try {
-    const userId = req.user.id;
-
-    await Registeruser.findByIdAndDelete(userId);
-
-    res.status(200).send("Account deleted successfully");
-  } catch (err) {
-    console.log(err);
-    res.status(500).send("Server error");
-  }
-
-})
-
 app.listen(5000, () => {
   console.log("Server is runnng");
 });

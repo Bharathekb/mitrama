@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import {useNavigate } from "react-router-dom";
 import { store } from '../App'
+import axios from "axios";
 
 const Header = ({ user }) => {
 
@@ -10,6 +11,23 @@ const Header = ({ user }) => {
      setToken(null);
   localStorage.removeItem("token"); 
   navigate("/");
+  }
+
+  const deleteAccount = () =>{
+      if (window.confirm("Are you sure you want to delete your account?")) {
+    axios.delete("http://localhost:5000/delete-account", {
+      headers: {
+        'x-token': token
+      }
+    })
+    .then(res => {
+      alert(res.data);
+      localStorage.removeItem("token");
+      setToken(null);
+      navigate("/");
+    })
+    .catch(err => console.log(err));
+  }
   }
   return (
     <nav className="navbar navbar-expand-lg px-4">
@@ -32,6 +50,7 @@ const Header = ({ user }) => {
           >
             <li>{user?.username}</li>
             <li onClick={logOut}>Logout</li>
+            <li onClick={deleteAccount}>Delete account</li>
           </ul>
         </li>
       </ul>
