@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import axios from 'axios';
 
 const Register = () => {
   const [data, setData] = useState({
@@ -17,7 +18,9 @@ const Register = () => {
 
   const SubmitHandler = (e) => {
     e.preventDefault();
-    console.log("Form Data:", data);
+    axios.post("http://localhost:5000/register", data).then(
+      res => alert(res.data)
+    )
   };
 
   return (
@@ -80,14 +83,14 @@ const Register = () => {
               <input
                 type="password"
                 className="form-control"
-                name="confirmPassword"
+                name="confirmpassword"
                 value={confirmpassword}
                 onChange={changeHandler}
               />
             </div>
           </div>
 
-          <button type="submit" className="btn My-formbtn w-100 mt-4">
+          <button type="submit" name="submit" className="btn My-formbtn w-100 mt-4">
             Sign Up
           </button>
 
