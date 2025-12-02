@@ -1,8 +1,13 @@
-import React, { useState } from "react";
+import React, { useState,useContext } from "react";
 import { Link } from "react-router-dom";
 import axios from 'axios';
+import {store} from '../App';
+import {Navigate } from "react-router-dom";
+
 
 const Login = () => {
+const [token,setToken]= useContext(store)
+
   const [data, setData] = useState({
     email: "",
     password: "",
@@ -17,10 +22,16 @@ const Login = () => {
   const SubmitHandler = (e) => {
     e.preventDefault();
     axios.post("http://localhost:5000/login", data).then(
-      res => alert(res.data)
+      res => {
+        setToken(res.data.token);
+      localStorage.setItem("token", res.data.token);
+      }
     )
+   
   };
-
+ if(token){
+       return <Navigate to="/main"/>
+    }
   return (
       <div className="Main-container">
           <form className="My-form" onSubmit={SubmitHandler}>

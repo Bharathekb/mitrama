@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link,useNavigate } from "react-router-dom";
 import axios from 'axios';
 
 const Register = () => {
@@ -15,11 +15,15 @@ const Register = () => {
   const changeHandler = (e) => {
     setData({ ...data, [e.target.name]: e.target.value });
   };
-
+const navigate = useNavigate();
+  
   const SubmitHandler = (e) => {
     e.preventDefault();
     axios.post("http://localhost:5000/register", data).then(
-      res => alert(res.data)
+      res => {
+        alert(res.data);
+      navigate('/');
+      }
     )
   };
 

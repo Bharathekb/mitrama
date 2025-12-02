@@ -1,6 +1,16 @@
-import React from "react";
+import React, { useContext } from "react";
+import {useNavigate } from "react-router-dom";
+import { store } from '../App'
 
-const Header = () => {
+const Header = ({ user }) => {
+
+  const [token, setToken] = useContext(store)
+  const navigate = useNavigate();
+  const logOut = (e) => {
+     setToken(null);
+  localStorage.removeItem("token"); 
+  navigate("/");
+  }
   return (
     <nav className="navbar navbar-expand-lg px-4">
       <a className="navbar-brand" href="/">
@@ -20,8 +30,8 @@ const Header = () => {
             className="dropdown-menu dropdown-menu-end"
             aria-labelledby="userDropdown"
           >
-            <li>{username}</li>
-            <li onClick={handleLogout}>Logout</li>
+            <li>{user?.username}</li>
+            <li onClick={logOut}>Logout</li>
           </ul>
         </li>
       </ul>
