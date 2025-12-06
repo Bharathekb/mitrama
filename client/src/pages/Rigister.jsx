@@ -10,6 +10,8 @@ const Register = () => {
     confirmpassword: "",
   });
 
+  const [errors, setErrors] = useState({});
+
   const { username, email, password, confirmpassword } = data;
 
   const changeHandler = (e) => {
@@ -19,11 +21,52 @@ const Register = () => {
 
   const SubmitHandler = (e) => {
     e.preventDefault();
+    let newErrors = {};
+
+    // Username validation
+    if (!username.trim()) {
+      newErrors.username = "Username is required";
+    }
+
+    // Email validation
+    const emailPattern = /\S+@\S+\.\S+/;
+    if (!email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!emailPattern.test(email)) {
+      newErrors.email = "Invalid email format";
+    }
+
+    // Password validation
+    if (!password.trim()) {
+      newErrors.password = "Password is required";
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
+    // Confirm password validation
+    if (!confirmpassword.trim()) {
+      newErrors.confirmpassword = "Confirm your password";
+    } else if (password !== confirmpassword) {
+      newErrors.confirmpassword = "Passwords do not match";
+    }
+
+    // ❗ If ANY errors exist → STOP here
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    // Clear old errors
+    setErrors({});
     axios
       .post(`${process.env.REACT_APP_API_URL}/register`, data)
       .then((res) => {
         alert(res.data);
         navigate("/");
+      })
+      .catch((err) => {
+        console.log(err);
+        setErrors("Something went wrong");
       });
   };
 
@@ -46,6 +89,7 @@ const Register = () => {
                 value={username}
                 onChange={changeHandler}
               />
+              {errors.username && <p className="My-err">{errors.username}</p>}
             </div>
           </div>
 
@@ -61,6 +105,7 @@ const Register = () => {
                 value={email}
                 onChange={changeHandler}
               />
+              {errors.email && <p className="My-err">{errors.email}</p>}
             </div>
           </div>
 
@@ -76,6 +121,7 @@ const Register = () => {
                 value={password}
                 onChange={changeHandler}
               />
+              {errors.password && <p className="My-err">{errors.password}</p>}
             </div>
           </div>
 
@@ -91,6 +137,9 @@ const Register = () => {
                 value={confirmpassword}
                 onChange={changeHandler}
               />
+              {errors.confirmpassword && (
+                <p className="My-err">{errors.confirmpassword}</p>
+              )}
             </div>
           </div>
 
