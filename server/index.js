@@ -16,7 +16,13 @@ mongoose
 
 // MIDDLEWARES
 app.use(express.json());
-app.use(cors({ origin: "*" }));
+app.use(
+  cors({
+    origin: "*", // or "https://your-frontend.netlify.app"
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "x-token"],
+  })
+);
 
 // REGISTER
 app.post("/register", async (req, res) => {
