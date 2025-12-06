@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Link,useNavigate } from "react-router-dom";
-import axios from 'axios';
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Register = () => {
   const [data, setData] = useState({
@@ -15,16 +15,16 @@ const Register = () => {
   const changeHandler = (e) => {
     setData({ ...data, [e.target.name]: e.target.value });
   };
-const navigate = useNavigate();
-  
+  const navigate = useNavigate();
+
   const SubmitHandler = (e) => {
     e.preventDefault();
-    axios.post("http://localhost:5000/register", data).then(
-      res => {
+    axios
+      .post(`${process.env.REACT_APP_API_URL}/register`, data)
+      .then((res) => {
         alert(res.data);
-      navigate('/');
-      }
-    )
+        navigate("/");
+      });
   };
 
   return (
@@ -94,7 +94,11 @@ const navigate = useNavigate();
             </div>
           </div>
 
-          <button type="submit" name="submit" className="btn My-formbtn w-100 mt-4">
+          <button
+            type="submit"
+            name="submit"
+            className="btn My-formbtn w-100 mt-4"
+          >
             Sign Up
           </button>
 

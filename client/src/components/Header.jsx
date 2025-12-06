@@ -1,34 +1,34 @@
 import React, { useContext } from "react";
-import {useNavigate } from "react-router-dom";
-import { store } from '../App'
+import { useNavigate } from "react-router-dom";
+import { store } from "../App";
 import axios from "axios";
 
 const Header = ({ user }) => {
-
-  const [token, setToken] = useContext(store)
+  const [token, setToken] = useContext(store);
   const navigate = useNavigate();
   const logOut = (e) => {
-     setToken(null);
-  localStorage.removeItem("token"); 
-  navigate("/");
-  }
+    setToken(null);
+    localStorage.removeItem("token");
+    navigate("/");
+  };
 
-  const deleteAccount = () =>{
-      if (window.confirm("Are you sure you want to delete your account?")) {
-    axios.delete("http://localhost:5000/delete-account", {
-      headers: {
-        'x-token': token
-      }
-    })
-    .then(res => {
-      alert(res.data);
-      localStorage.removeItem("token");
-      setToken(null);
-      navigate("/");
-    })
-    .catch(err => console.log(err));
-  }
-  }
+  const deleteAccount = () => {
+    if (window.confirm("Are you sure you want to delete your account?")) {
+      axios
+        .delete(`${process.env.REACT_APP_API_URL}/delete-account`, {
+          headers: {
+            "x-token": token,
+          },
+        })
+        .then((res) => {
+          alert(res.data);
+          localStorage.removeItem("token");
+          setToken(null);
+          navigate("/");
+        })
+        .catch((err) => console.log(err));
+    }
+  };
   return (
     <nav className="navbar navbar-expand-lg px-4">
       <a className="navbar-brand" href="/">
