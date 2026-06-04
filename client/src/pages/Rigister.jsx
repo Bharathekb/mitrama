@@ -65,8 +65,14 @@ const Register = () => {
         navigate("/");
       })
       .catch((err) => {
-        console.log(err);
-        setErrors("Something went wrong");
+        if (err.response) {
+          const message = err.response.data;
+          if(message==="User already exist"){
+            alert(message)
+          }
+        }
+
+    
       });
   };
 
