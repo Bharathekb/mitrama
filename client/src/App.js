@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Rigister from "./pages/Rigister";
 import Main from "./pages/Main";
+import ForgotPassword from "./pages/ForgotPassword";
+import Settings from "./pages/Settings";
 import "./App.css";
 
 export const store = createContext(); 
@@ -23,7 +25,9 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/signup" element={<Rigister />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/main" element={<Main />} />
+        <Route path="/settings" element={<Settings />} />
       </Routes>
     </BrowserRouter>
     </store.Provider>

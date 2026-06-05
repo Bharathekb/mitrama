@@ -8,14 +8,16 @@ const Register = () => {
     email: "",
     password: "",
     confirmpassword: "",
+    privacyAccepted: false,
   });
 
   const [errors, setErrors] = useState({});
 
-  const { username, email, password, confirmpassword } = data;
+  const { username, email, password, confirmpassword, privacyAccepted } = data;
 
   const changeHandler = (e) => {
-    setData({ ...data, [e.target.name]: e.target.value });
+    const value = e.target.type === "checkbox" ? e.target.checked : e.target.value;
+    setData({ ...data, [e.target.name]: value });
   };
   const navigate = useNavigate();
 
@@ -50,6 +52,10 @@ const Register = () => {
       newErrors.confirmpassword = "Passwords do not match";
     }
 
+    if (!privacyAccepted) {
+      newErrors.privacyAccepted = "Please accept the privacy agreement";
+    }
+
     // ❗ If ANY errors exist → STOP here
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -61,18 +67,15 @@ const Register = () => {
     axios
       .post(`${process.env.REACT_APP_API_URL}/register`, data)
       .then((res) => {
-        alert(res.data);
         navigate("/");
       })
       .catch((err) => {
         if (err.response) {
           const message = err.response.data;
           if(message==="User already exist"){
-            alert(message)
+            setErrors({ api: message });
           }
         }
-
-    
       });
   };
 
@@ -149,6 +152,28 @@ const Register = () => {
             </div>
           </div>
 
+          <div className="privacy-agreement">
+            <label>
+              <input
+                type="checkbox"
+                name="privacyAccepted"
+                checked={privacyAccepted}
+                onChange={changeHandler}
+              />
+              <span>
+                I agree that Mitrama uses my account details only to provide
+                login, follow requests, and chat features. We do not sell
+                personal data. Messages and shared media are used for the chat
+                experience between connected users.
+              </span>
+            </label>
+            {errors.privacyAccepted && (
+              <p className="My-err position-relative">
+                {errors.privacyAccepted}
+              </p>
+            )}
+          </div>
+
           <button
             type="submit"
             name="submit"
@@ -156,6 +181,10 @@ const Register = () => {
           >
             Sign Up
           </button>
+
+          {errors.api && (
+            <p className="My-err text-center position-relative">{errors.api}</p>
+          )}
 
           <div className="d-flex justify-content-between w-100">
             <div className="Fw-600">Already have an account?</div>

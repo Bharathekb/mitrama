@@ -13,10 +13,11 @@ let Registeruser = new mongoose.Schema({
   password: {
     type: String,
     required: true,
+    select: false,
   },
   confirmpassword: {
     type: String,
-    required: true,
+    select: false,
   },
 });
 module.exports = mongoose.model("Rigisteruser", Registeruser);

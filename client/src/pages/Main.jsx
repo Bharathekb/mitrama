@@ -3,6 +3,8 @@ import { store } from "../App";
 import { Navigate } from "react-router-dom";
 import axios from "axios";
 import Header from "../components/Header";
+import ChatScreen from "../components/ChatScreen";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 const Main = () => {
   const [token] = useContext(store);
@@ -22,10 +24,19 @@ const Main = () => {
     return <Navigate to="/" />;
   }
 
+  if (!data) {
+    return (
+      <div className="Main-container">
+        <LoadingSpinner label="Loading app" />
+      </div>
+    );
+  }
+
   return (
-    <div className="Main-container">
-      <Header user={data} />
-    </div>
+   <div className="Main-container">
+  <Header user={data} />
+  <ChatScreen user={data} token={token} />
+</div>
   );
 };
 

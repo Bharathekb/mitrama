@@ -109,6 +109,10 @@ const Login = () => {
             Login
           </button>
 
+          <div className="forgot-link">
+            <Link to="/forgot-password">Forgot password?</Link>
+          </div>
+
           {/* API Errors */}
           {errors.api && (
             <p className="My-err text-center position-relative">{errors.api}</p>
