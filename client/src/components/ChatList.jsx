@@ -39,7 +39,6 @@ const ChatList = ({
         >
           <div>
             <span>{chatUser.username}</span>
-            <small>{chatUser.email}</small>
           </div>
           <span className="chat-arrow">&gt;</span>
         </button>

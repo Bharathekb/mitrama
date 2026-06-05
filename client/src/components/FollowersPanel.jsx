@@ -9,10 +9,7 @@ const FollowersPanel = ({ users, onBack, onSelectUser }) => {
     if (!value) return users;
 
     return users.filter((chatUser) => {
-      return (
-        chatUser.username?.toLowerCase().includes(value) ||
-        chatUser.email?.toLowerCase().includes(value)
-      );
+      return chatUser.username?.toLowerCase().includes(value);
     });
   }, [search, users]);
 
@@ -51,7 +48,6 @@ const FollowersPanel = ({ users, onBack, onSelectUser }) => {
           >
             <div>
               <span>{chatUser.username}</span>
-              <small>{chatUser.email}</small>
             </div>
             <span className="chat-arrow">&gt;</span>
           </button>

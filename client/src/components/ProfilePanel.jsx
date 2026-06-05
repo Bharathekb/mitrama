@@ -21,7 +21,6 @@ const ProfilePanel = ({ profileUser, onBack, onMessage, onClearChat }) => {
         <div className="profile-hero">
           <div className="profile-large-avatar">{initial}</div>
           <h3>{profileUser?.username}</h3>
-          <p>{profileUser?.email}</p>
           <span className="profile-status">Connected</span>
         </div>
 

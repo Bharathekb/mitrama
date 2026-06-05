@@ -26,10 +26,7 @@ const PeoplePanel = ({ token, onBack, onNotify, onChanged }) => {
 
         if (!query) return true;
 
-        return (
-            person.username?.toLowerCase().includes(query) ||
-            person.email?.toLowerCase().includes(query)
-        );
+        return person.username?.toLowerCase().includes(query);
     });
 
     const loadData = useCallback(() => {
@@ -97,7 +94,6 @@ const PeoplePanel = ({ token, onBack, onNotify, onChanged }) => {
                     <div key={person._id} className="people-row">
                         <div className="people-info">
                             <span>{person.username}</span>
-                            {person.email && <small>{person.email}</small>}
                         </div>
                         <button
                             disabled={isFollowDisabled(person)}

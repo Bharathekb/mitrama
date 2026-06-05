@@ -27,6 +27,7 @@ const ChatScreen = ({ user, token }) => {
   const [profileUser, setProfileUser] = useState(null);
   const socketRef = useRef(null);
   const selectedUserRef = useRef(null);
+  const messagesEndRef = useRef(null);
 
   const showToast = useCallback((message, type = "success") => {
     setToast({ message, type });
@@ -137,6 +138,22 @@ const ChatScreen = ({ user, token }) => {
       .catch((err) => console.log(err))
       .finally(() => setIsLoadingMessages(false));
   }, [selectedUser, token]);
+
+  useEffect(() => {
+    if (!selectedUser || isLoadingMessages) return;
+
+    const scrollToLatestMessage = () => {
+      messagesEndRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    };
+
+    scrollToLatestMessage();
+    const mediaRenderTimer = setTimeout(scrollToLatestMessage, 150);
+
+    return () => clearTimeout(mediaRenderTimer);
+  }, [messages, selectedUser, isLoadingMessages]);
 
   const sendMessage = (text) => {
     if (!selectedUser) return;
@@ -272,6 +289,7 @@ const ChatScreen = ({ user, token }) => {
                 />
               ))
             )}
+            <div ref={messagesEndRef} />
           </div>
 
           <MessageInput
