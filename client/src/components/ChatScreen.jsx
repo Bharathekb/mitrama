@@ -11,6 +11,7 @@ import RequestsPanel from "./RequestsPanel";
 import LoadingSpinner from "./LoadingSpinner";
 import ConfirmModal from "./ConfirmModal";
 import ProfilePanel from "./ProfilePanel";
+import UserAvatar from "./UserAvatar";
 
 const ChatScreen = ({ user, token }) => {
   const [chatUsers, setChatUsers] = useState([]);
@@ -79,6 +80,24 @@ const ChatScreen = ({ user, token }) => {
     loadRequests();
   }, [loadChatUsers, loadRequests]);
 
+  const markChatAsRead = useCallback((senderId) => {
+    if (!senderId) return;
+
+    setChatUsers((prev) =>
+      prev.map((chatUser) =>
+        chatUser._id === senderId ? { ...chatUser, unreadCount: 0 } : chatUser
+      )
+    );
+
+    axios
+      .put(
+        `${process.env.REACT_APP_API_URL}/messages/${senderId}/read`,
+        {},
+        { headers: { "x-token": token } }
+      )
+      .catch((err) => console.log(err));
+  }, [token]);
+
   useEffect(() => {
     selectedUserRef.current = selectedUser;
   }, [selectedUser]);
@@ -93,16 +112,33 @@ const ChatScreen = ({ user, token }) => {
 
     socketRef.current.on("chat:new-message", (message) => {
       const activeUser = selectedUserRef.current;
+      const senderId = message.sender?._id;
+      const receiverId = message.receiver?._id;
+      const isIncomingMessage = receiverId === user?._id;
+
+      if (isIncomingMessage && activeUser?._id !== senderId) {
+        setChatUsers((prev) =>
+          prev.map((chatUser) =>
+            chatUser._id === senderId
+              ? { ...chatUser, unreadCount: (chatUser.unreadCount || 0) + 1 }
+              : chatUser
+          )
+        );
+      }
 
       if (!activeUser) return;
 
       const belongsToOpenChat =
-        message.sender?._id === activeUser._id ||
-        message.receiver?._id === activeUser._id;
+        senderId === activeUser._id ||
+        receiverId === activeUser._id;
 
       if (!belongsToOpenChat) return;
 
       setMessages((prev) => [...prev, message]);
+
+      if (isIncomingMessage) {
+        markChatAsRead(senderId);
+      }
     });
 
     socketRef.current.on("chat:error", (error) => {
@@ -111,6 +147,16 @@ const ChatScreen = ({ user, token }) => {
 
     socketRef.current.on("chat:message-deleted", ({ messageId }) => {
       setMessages((prev) => prev.filter((message) => message._id !== messageId));
+    });
+
+    socketRef.current.on("chat:messages-read", ({ readerId }) => {
+      setMessages((prev) =>
+        prev.map((message) =>
+          message.receiver?._id === readerId
+            ? { ...message, isRead: true }
+            : message
+        )
+      );
     });
 
     socketRef.current.on("chat:cleared", ({ receiverId }) => {
@@ -124,7 +170,7 @@ const ChatScreen = ({ user, token }) => {
     return () => {
       socketRef.current.disconnect();
     };
-  }, [loadChatUsers, loadRequests, showToast, token]);
+  }, [loadChatUsers, loadRequests, markChatAsRead, showToast, token, user?._id]);
 
   useEffect(() => {
     if (!selectedUser) return;
@@ -134,7 +180,16 @@ const ChatScreen = ({ user, token }) => {
       .get(`${process.env.REACT_APP_API_URL}/messages/${selectedUser._id}`, {
         headers: { "x-token": token },
       })
-      .then((res) => setMessages(res.data))
+      .then((res) => {
+        setMessages(res.data);
+        setChatUsers((prev) =>
+          prev.map((chatUser) =>
+            chatUser._id === selectedUser._id
+              ? { ...chatUser, unreadCount: 0 }
+              : chatUser
+          )
+        );
+      })
       .catch((err) => console.log(err))
       .finally(() => setIsLoadingMessages(false));
   }, [selectedUser, token]);
@@ -246,6 +301,7 @@ const ChatScreen = ({ user, token }) => {
             >
               <img src="/Arrow-left-gray.svg" alt="" />
             </button>
+            <UserAvatar user={selectedUser} />
             <span>{selectedUser.username}</span>
             <div className="chat-title-actions">
               <button

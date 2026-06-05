@@ -1,8 +1,7 @@
 import React from "react";
+import UserAvatar from "./UserAvatar";
 
 const ProfilePanel = ({ profileUser, onBack, onMessage, onClearChat }) => {
-  const initial = profileUser?.username?.charAt(0)?.toUpperCase() || "U";
-
   return (
     <div className="profile-screen">
       <div className="chat-title">
@@ -19,7 +18,7 @@ const ProfilePanel = ({ profileUser, onBack, onMessage, onClearChat }) => {
 
       <div className="profile-content">
         <div className="profile-hero">
-          <div className="profile-large-avatar">{initial}</div>
+          <UserAvatar user={profileUser} size="lg" />
           <h3>{profileUser?.username}</h3>
           <span className="profile-status">Connected</span>
         </div>

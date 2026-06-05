@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { store } from "../App";
 import axios from "axios";
+import UserAvatar from "./UserAvatar";
 
 const Header = ({ user }) => {
   const [token, setToken] = useContext(store);
@@ -36,9 +37,7 @@ const Header = ({ user }) => {
       </a>
       <ul className="navbar-nav header-actions">
         <li className="profile-box">
-          <span className="profile-avatar">
-            {user?.username?.charAt(0)?.toUpperCase() || "U"}
-          </span>
+          <UserAvatar user={user} />
           <span className="profile-name">{user?.username || "User"}</span>
         </li>
         <li className="nav-item dropdown">

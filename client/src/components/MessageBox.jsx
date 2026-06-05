@@ -110,6 +110,9 @@ const MessageBox = ({ message, isOwnMessage, onDelete }) => {
             {formatMessageTime(message.createdAt)}
           </span>
         </div>
+        {isOwnMessage && message.isRead && (
+          <span className="message-seen">Seen</span>
+        )}
       </div>
     </div>
   );

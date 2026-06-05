@@ -1,5 +1,6 @@
 import React from "react";
 import LoadingSpinner from "./LoadingSpinner";
+import UserAvatar from "./UserAvatar";
 
 const ChatList = ({
   users,
@@ -37,10 +38,18 @@ const ChatList = ({
           className="chat-user-row"
           onClick={() => onSelectUser(chatUser)}
         >
+          <UserAvatar user={chatUser} />
           <div>
             <span>{chatUser.username}</span>
           </div>
-          <span className="chat-arrow">&gt;</span>
+          <div className="chat-row-meta">
+            {chatUser.unreadCount > 0 && (
+              <span className="chat-unread-count">
+                {chatUser.unreadCount > 99 ? "99+" : chatUser.unreadCount}
+              </span>
+            )}
+            <span className="chat-arrow">&gt;</span>
+          </div>
         </button>
       ))}
     </div>

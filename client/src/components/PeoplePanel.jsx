@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import LoadingSpinner from "./LoadingSpinner";
+import UserAvatar from "./UserAvatar";
 
 const PeoplePanel = ({ token, onBack, onNotify, onChanged }) => {
     const [users, setUsers] = useState([]);
@@ -92,7 +93,8 @@ const PeoplePanel = ({ token, onBack, onNotify, onChanged }) => {
 
                 {!isLoading && filteredUsers.map((person) => (
                     <div key={person._id} className="people-row">
-                        <div className="people-info">
+                        <div className="people-info-row">
+                            <UserAvatar user={person} />
                             <span>{person.username}</span>
                         </div>
                         <button

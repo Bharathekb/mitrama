@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import UserAvatar from "./UserAvatar";
 
 const FollowersPanel = ({ users, onBack, onSelectUser }) => {
   const [search, setSearch] = useState("");
@@ -46,6 +47,7 @@ const FollowersPanel = ({ users, onBack, onSelectUser }) => {
             className="chat-user-row"
             onClick={() => onSelectUser(chatUser)}
           >
+            <UserAvatar user={chatUser} />
             <div>
               <span>{chatUser.username}</span>
             </div>

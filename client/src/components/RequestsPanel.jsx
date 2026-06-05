@@ -1,5 +1,6 @@
 import React from "react";
 import axios from "axios";
+import UserAvatar from "./UserAvatar";
 
 const RequestsPanel = ({
   incomingRequests,
@@ -49,7 +50,10 @@ const RequestsPanel = ({
 
           {incomingRequests.map((request) => (
             <div key={request._id} className="people-row">
-              <span>{request.requester.username}</span>
+              <div className="people-info-row">
+                <UserAvatar user={request.requester} />
+                <span>{request.requester.username}</span>
+              </div>
               <button onClick={() => acceptRequest(request._id)}>Accept</button>
             </div>
           ))}
@@ -62,7 +66,10 @@ const RequestsPanel = ({
 
           {sentRequests.map((person) => (
             <div key={person._id} className="people-row">
-              <span>{person.username}</span>
+              <div className="people-info-row">
+                <UserAvatar user={person} />
+                <span>{person.username}</span>
+              </div>
               <button disabled>Requested</button>
             </div>
           ))}

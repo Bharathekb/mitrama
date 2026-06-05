@@ -61,7 +61,7 @@ mongoose
   .catch((err) => console.log("DB Error:", err));
 
 // MIDDLEWARES
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
 app.use(
   cors({
     origin: allowedOrigins,
@@ -137,7 +137,7 @@ app.post("/login", async (req, res) => {
 app.get("/main", middleware, async (req, res) => {
   try {
     let exist = await Registeruser.findById(req.user.id).select(
-      "username email"
+      "username email profileImage"
     );
     if (!exist) return res.status(400).send("User not found");
 
@@ -147,12 +147,40 @@ app.get("/main", middleware, async (req, res) => {
     res.status(500).send("Server error");
   }
 });
+
+app.put("/profile-image", middleware, async (req, res) => {
+  try {
+    const { profileImage } = req.body;
+
+    if (profileImage && !profileImage.startsWith("data:image/")) {
+      return res.status(400).send("Only image files are allowed");
+    }
+
+    if (profileImage && profileImage.length > 2 * 1024 * 1024) {
+      return res.status(400).send("Profile image must be under 2MB");
+    }
+
+    const updatedUser = await Registeruser.findByIdAndUpdate(
+      req.user.id,
+      { profileImage: profileImage || "" },
+      { new: true, select: "username email profileImage" }
+    );
+
+    if (!updatedUser) return res.status(400).send("User not found");
+
+    res.json(updatedUser);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server error");
+  }
+});
+
 app.get("/users", middleware, async (req, res) => {
   try {
     const currentUserId = req.user.id.toString();
     const users = await Registeruser.find(
       { _id: { $ne: req.user.id } },
-      "username email"
+      "username email profileImage"
     ).lean();
 
     const connections = await Connection.find({
@@ -228,8 +256,8 @@ app.get("/chat-users", middleware, async (req, res) => {
       status: "accepted",
       $or: [{ requester: req.user.id }, { receiver: req.user.id }],
     })
-      .populate("requester", "username email")
-      .populate("receiver", "username email");
+      .populate("requester", "username email profileImage")
+      .populate("receiver", "username email profileImage");
 
     const users = connections.map((connection) => {
       return connection.requester._id.toString() === req.user.id.toString()
@@ -237,7 +265,36 @@ app.get("/chat-users", middleware, async (req, res) => {
   : connection.requester;
     });
 
-    res.json(users);
+    const unreadCounts = await Message.aggregate([
+      {
+        $match: {
+          receiver: new mongoose.Types.ObjectId(req.user.id),
+          isRead: false,
+        },
+      },
+      {
+        $group: {
+          _id: "$sender",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const unreadCountMap = unreadCounts.reduce((result, item) => {
+      result[item._id.toString()] = item.count;
+      return result;
+    }, {});
+
+    const usersWithUnreadCounts = users.map((chatUser) => {
+      const userObject = chatUser.toObject();
+
+      return {
+        ...userObject,
+        unreadCount: unreadCountMap[chatUser._id.toString()] || 0,
+      };
+    });
+
+    res.json(usersWithUnreadCounts);
   } catch (err) {
     console.log(err);
     res.status(500).send("Server error");
@@ -275,17 +332,59 @@ app.get("/messages/:receiverId", middleware, async (req, res) => {
       return res.status(403).send("You can only chat with accepted connections");
     }
 
+    await Message.updateMany(
+      { sender: receiverId, receiver: currentUserId, isRead: false },
+      { $set: { isRead: true } }
+    );
+
+    io.to(receiverId).emit("chat:messages-read", {
+      readerId: currentUserId,
+    });
+
     const messages = await Message.find({
       $or: [
         { sender: currentUserId, receiver: receiverId },
         { sender: receiverId, receiver: currentUserId },
       ],
     })
-      .populate("sender", "username email")
-      .populate("receiver", "username email")
+      .populate("sender", "username email profileImage")
+      .populate("receiver", "username email profileImage")
       .sort({ createdAt: 1 });
 
     res.json(messages);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server error");
+  }
+});
+
+app.put("/messages/:senderId/read", middleware, async (req, res) => {
+  try {
+    const currentUserId = req.user.id;
+    const senderId = req.params.senderId;
+
+    const canChat = await Connection.findOne({
+      status: "accepted",
+      $or: [
+        { requester: currentUserId, receiver: senderId },
+        { requester: senderId, receiver: currentUserId },
+      ],
+    });
+
+    if (!canChat) {
+      return res.status(403).send("You can only update accepted chats");
+    }
+
+    await Message.updateMany(
+      { sender: senderId, receiver: currentUserId, isRead: false },
+      { $set: { isRead: true } }
+    );
+
+    io.to(senderId).emit("chat:messages-read", {
+      readerId: currentUserId,
+    });
+
+    res.send("Messages marked as read");
   } catch (err) {
     console.log(err);
     res.status(500).send("Server error");
@@ -370,8 +469,8 @@ io.on("connection", async (socket) => {
     });
 
     const populatedMessage = await message.populate([
-      { path: "sender", select: "username email" },
-      { path: "receiver", select: "username email" },
+      { path: "sender", select: "username email profileImage" },
+      { path: "receiver", select: "username email profileImage" },
     ]);
 
     io.to(socket.userId).emit("chat:new-message", populatedMessage);
@@ -527,7 +626,7 @@ app.get("/connections/pending", middleware, async (req, res) => {
     const requests = await Connection.find({
       receiver: req.user.id,
       status: "pending",
-    }).populate("requester", "username email");
+    }).populate("requester", "username email profileImage");
 
     res.json(requests);
   } catch (err) {

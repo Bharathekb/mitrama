@@ -19,5 +19,8 @@ let Registeruser = new mongoose.Schema({
     type: String,
     select: false,
   },
+  profileImage: {
+    type: String,
+  },
 });
 module.exports = mongoose.model("Rigisteruser", Registeruser);

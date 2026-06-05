@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { store } from "../App";
 import LoadingSpinner from "../components/LoadingSpinner";
+import UserAvatar from "../components/UserAvatar";
 
 const Settings = () => {
   const [token, setToken] = useContext(store);
@@ -15,6 +16,7 @@ const Settings = () => {
   });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [isUploadingProfileImage, setIsUploadingProfileImage] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -84,6 +86,69 @@ const Settings = () => {
       );
   };
 
+  const updateProfileImage = (e) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    setError("");
+    setMessage("");
+
+    if (!file.type.startsWith("image/")) {
+      setError("Please select an image file");
+      return;
+    }
+
+    if (file.size > 1.5 * 1024 * 1024) {
+      setError("Profile image must be under 1.5MB");
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      setIsUploadingProfileImage(true);
+
+      axios
+        .put(
+          `${process.env.REACT_APP_API_URL}/profile-image`,
+          { profileImage: reader.result },
+          { headers: { "x-token": token } }
+        )
+        .then((res) => {
+          setUser(res.data);
+          setMessage("Profile photo updated");
+        })
+        .catch((err) =>
+          setError(err.response?.data || "Could not update profile photo")
+        )
+        .finally(() => setIsUploadingProfileImage(false));
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const removeProfileImage = () => {
+    setError("");
+    setMessage("");
+    setIsUploadingProfileImage(true);
+
+    axios
+      .put(
+        `${process.env.REACT_APP_API_URL}/profile-image`,
+        { profileImage: "" },
+        { headers: { "x-token": token } }
+      )
+      .then((res) => {
+        setUser(res.data);
+        setMessage("Profile photo removed");
+      })
+      .catch((err) =>
+        setError(err.response?.data || "Could not remove profile photo")
+      )
+      .finally(() => setIsUploadingProfileImage(false));
+  };
+
   return (
     <div className="Main-container">
       {!user ? (
@@ -101,13 +166,31 @@ const Settings = () => {
             <section className="settings-card">
               <h4>Profile</h4>
               <div className="settings-profile">
-                <span className="profile-avatar">
-                  {user.username?.charAt(0)?.toUpperCase()}
-                </span>
+                <UserAvatar user={user} size="md" />
                 <div>
                   <strong>{user.username}</strong>
                   <p>{user.email}</p>
                 </div>
+              </div>
+              <div className="settings-profile-actions">
+                <label>
+                  {isUploadingProfileImage ? "Uploading..." : "Upload photo"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={updateProfileImage}
+                    disabled={isUploadingProfileImage}
+                  />
+                </label>
+                {user.profileImage && (
+                  <button
+                    type="button"
+                    onClick={removeProfileImage}
+                    disabled={isUploadingProfileImage}
+                  >
+                    Remove photo
+                  </button>
+                )}
               </div>
             </section>
 
