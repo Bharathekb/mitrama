@@ -34,10 +34,13 @@ body {
 
 .Main-container {
   position: relative;
-  width: 400px;
+  width: min(400px, 100vw);
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   margin: auto;
+  display: flex;
+  flex-direction: column;
   box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px,
     rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
   border: 1px solid #e2e8f0;
@@ -153,6 +156,7 @@ body {
   width: 100%;
   z-index: 1050;
   justify-content: space-between;
+  flex-wrap: nowrap;
   background-color: #fff;
   border-bottom: 1px solid #e4e4e7;
 }
@@ -320,7 +324,8 @@ body {
 // CHAT
 .chat-screen {
   position: relative;
-  height: calc(100vh - 57px);
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: #f8fafc;
@@ -391,8 +396,7 @@ body {
   margin-bottom: 10px;
 }
 
-.chat-list-screen h4,
-.people-panel h4 {
+.chat-list-screen h4 {
   margin: 12px 0 8px;
   font-size: 16px;
   font-weight: 700;
@@ -406,7 +410,7 @@ body {
 .chat-list-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .chat-list-actions button {
@@ -415,8 +419,8 @@ body {
   border-radius: 999px;
   background: #fff;
   color: #18181b;
-  padding: 5px 8px;
-  font-size: 11px;
+  padding: 5px 7px;
+  font-size: 10px;
   font-weight: 600;
   cursor: pointer;
 }
@@ -434,13 +438,11 @@ body {
   font-size: 10px;
 }
 
-.chat-list-screen h4:first-child,
-.people-panel h4:first-child {
+.chat-list-screen h4:first-child {
   margin-top: 0;
 }
 
-.chat-list-screen p,
-.people-panel p {
+.chat-list-screen p {
   margin: 0 0 12px;
   font-size: 14px;
   color: #71717a;
@@ -598,6 +600,7 @@ body {
 
 .followers-screen,
 .requests-screen,
+.people-screen,
 .profile-screen {
   flex: 1;
   min-height: 0;
@@ -607,7 +610,8 @@ body {
 }
 
 .followers-content,
-.requests-content {
+.requests-content,
+.people-content {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -615,7 +619,8 @@ body {
   padding: 14px;
 }
 
-.followers-search {
+.followers-search,
+.people-search {
   width: 100%;
   border: 1px solid #e4e4e7;
   border-radius: 6px;
@@ -624,7 +629,8 @@ body {
   font-size: 14px;
 }
 
-.followers-empty {
+.followers-empty,
+.people-empty {
   margin: 0;
   font-size: 14px;
   color: #71717a;
@@ -1121,9 +1127,81 @@ body {
   filter: brightness(0) invert(1);
 }
 
-// PEOPLE / REQUESTS
-.people-panel {
-  padding: 14px;
+@media (max-width: 420px) {
+  .navbar {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+
+  .brand-logo {
+    height: 28px;
+  }
+
+  .navbar-brand {
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  .header-actions {
+    margin-left: auto;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .profile-box {
+    max-width: 92px;
+    padding: 3px 6px;
+    order: 1;
+  }
+
+  .profile-avatar {
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+  }
+
+  .profile-name {
+    font-size: 11px;
+  }
+
+  .nav-item.dropdown {
+    order: 2;
+    flex-shrink: 0;
+  }
+
+  .dropdown-toggle {
+    padding: 4px 6px;
+  }
+
+  .messages-list {
+    padding: 12px;
+  }
+
+  .message-input {
+    gap: 6px;
+    padding: 8px;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+  }
+
+  .message-input input {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+
+  .message-input button {
+    width: 38px;
+    height: 38px;
+  }
+
+  .message-input button img {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 .people-row {
@@ -1135,11 +1213,27 @@ body {
   border-bottom: 1px solid #e4e4e7;
 }
 
+.people-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .people-row span {
   min-width: 0;
   font-size: 14px;
   font-weight: 500;
   color: #18181b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.people-row small {
+  min-width: 0;
+  color: #71717a;
+  font-size: 12px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

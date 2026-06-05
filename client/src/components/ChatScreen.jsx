@@ -297,6 +297,13 @@ const ChatScreen = ({ user, token }) => {
               onChanged={refreshSocialData}
               onNotify={showToast}
             />
+          ) : activeView === "findPeople" ? (
+            <PeoplePanel
+              token={token}
+              onBack={() => setActiveView("home")}
+              onNotify={showToast}
+              onChanged={refreshSocialData}
+            />
           ) : (
             <div className="chat-home">
               <ChatList
@@ -304,14 +311,9 @@ const ChatScreen = ({ user, token }) => {
                 isLoading={isLoadingChats}
                 requestCount={incomingRequests.length + sentRequests.length}
                 onSelectUser={setSelectedUser}
+                onOpenFindPeople={() => setActiveView("findPeople")}
                 onOpenFollowers={() => setActiveView("followers")}
                 onOpenRequests={() => setActiveView("requests")}
-              />
-              <PeoplePanel
-                token={token}
-                onAccepted={refreshSocialData}
-                onNotify={showToast}
-                onChanged={refreshSocialData}
               />
             </div>
           )}

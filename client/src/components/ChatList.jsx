@@ -6,6 +6,7 @@ const ChatList = ({
   isLoading,
   requestCount,
   onSelectUser,
+  onOpenFindPeople,
   onOpenFollowers,
   onOpenRequests,
 }) => {
@@ -14,6 +15,9 @@ const ChatList = ({
       <div className="chat-list-header">
         <h4>Chats</h4>
         <div className="chat-list-actions">
+          <button type="button" onClick={onOpenFindPeople}>
+            Find
+          </button>
           <button type="button" onClick={onOpenFollowers}>
             Followers
           </button>

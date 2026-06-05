@@ -2,9 +2,9 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import LoadingSpinner from "./LoadingSpinner";
 
-const PeoplePanel = ({ token, onAccepted, onNotify, onChanged }) => {
+const PeoplePanel = ({ token, onBack, onNotify, onChanged }) => {
     const [users, setUsers] = useState([]);
-    const [pending, setPending] = useState([]);
+    const [searchText, setSearchText] = useState("");
     const [isLoading, setIsLoading] = useState(true);
 
     const headers = useMemo(() => ({ "x-token": token }), [token]);
@@ -21,19 +21,23 @@ const PeoplePanel = ({ token, onAccepted, onNotify, onChanged }) => {
         return Boolean(person.connectionStatus);
     };
 
+    const filteredUsers = users.filter((person) => {
+        const query = searchText.trim().toLowerCase();
+
+        if (!query) return true;
+
+        return (
+            person.username?.toLowerCase().includes(query) ||
+            person.email?.toLowerCase().includes(query)
+        );
+    });
+
     const loadData = useCallback(() => {
         setIsLoading(true);
 
-        Promise.all([
-            axios.get(`${process.env.REACT_APP_API_URL}/users`, { headers }),
-            axios.get(`${process.env.REACT_APP_API_URL}/connections/pending`, {
-                headers,
-            }),
-        ])
-            .then(([usersRes, pendingRes]) => {
-                setUsers(usersRes.data);
-                setPending(pendingRes.data);
-            })
+        axios
+            .get(`${process.env.REACT_APP_API_URL}/users`, { headers })
+            .then((res) => setUsers(res.data))
             .catch((err) => console.log(err))
             .finally(() => setIsLoading(false));
     }, [headers]);
@@ -60,55 +64,50 @@ const PeoplePanel = ({ token, onAccepted, onNotify, onChanged }) => {
             });
     };
 
-    const acceptRequest = (connectionId) => {
-        axios
-            .put(
-                `${process.env.REACT_APP_API_URL}/connections/accept/${connectionId}`,
-                {},
-                { headers }
-            )
-            .then(() => {
-                loadData();
-                onAccepted();
-                onNotify("Request accepted", "success");
-            })
-            .catch((err) =>
-                onNotify(err.response?.data || "Accept failed", "error")
-            );
-    };
-
     return (
-        <div className="people-panel">
-            {isLoading && <LoadingSpinner label="Loading people" />}
+        <div className="people-screen">
+            <div className="chat-title">
+                <button
+                    type="button"
+                    className="back-btn"
+                    aria-label="Back to home"
+                    onClick={onBack}
+                >
+                    <img src="/Arrow-left-gray.svg" alt="" />
+                </button>
+                <span>Find People</span>
+            </div>
 
-            {!isLoading && (
-                <>
-            <h4>Requests</h4>
+            <div className="people-content">
+                <input
+                    type="search"
+                    className="people-search"
+                    placeholder="Search people"
+                    value={searchText}
+                    onChange={(event) => setSearchText(event.target.value)}
+                />
 
-            {pending.length === 0 && <p>No requests</p>}
+                {isLoading && <LoadingSpinner label="Loading people" />}
 
-            {pending.map((request) => (
-                <div key={request._id} className="people-row">
-                    <span>{request.requester.username}</span>
-                    <button onClick={() => acceptRequest(request._id)}>Accept</button>
-                </div>
-            ))}
+                {!isLoading && filteredUsers.length === 0 && (
+                    <p className="people-empty">No people found</p>
+                )}
 
-            <h4>Find People</h4>
-
-            {users.map((person) => (
-                <div key={person._id} className="people-row">
-                    <span>{person.username}</span>
-                    <button
-                        disabled={isFollowDisabled(person)}
-                        onClick={() => sendRequest(person._id)}
-                    >
-                        {getFollowButtonText(person)}
-                    </button>
-                </div>
-            ))}
-                </>
-            )}
+                {!isLoading && filteredUsers.map((person) => (
+                    <div key={person._id} className="people-row">
+                        <div className="people-info">
+                            <span>{person.username}</span>
+                            {person.email && <small>{person.email}</small>}
+                        </div>
+                        <button
+                            disabled={isFollowDisabled(person)}
+                            onClick={() => sendRequest(person._id)}
+                        >
+                            {getFollowButtonText(person)}
+                        </button>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 };
