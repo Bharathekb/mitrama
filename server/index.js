@@ -21,13 +21,25 @@ const cors = require("cors");
 
 const app = express();
 const server = http.createServer(app);
-const allowedOrigins = process.env.CLIENT_URL
-  ? [process.env.CLIENT_URL, "http://localhost:3000"]
-  : "*";
+const allowedOrigins = [
+  ...(process.env.CLIENT_URLS || process.env.CLIENT_URL || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+  "http://localhost:3000",
+];
+
+const corsOrigin = (origin, callback) => {
+  if (!origin || allowedOrigins.includes(origin)) {
+    return callback(null, true);
+  }
+
+  return callback(new Error(`CORS blocked origin: ${origin}`));
+};
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: corsOrigin,
     methods: ["GET", "POST"],
   },
   maxHttpBufferSize: 12 * 1024 * 1024,
@@ -92,7 +104,7 @@ mongoose
 app.use(express.json({ limit: "5mb" }));
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: corsOrigin,
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "x-token"],
   })
