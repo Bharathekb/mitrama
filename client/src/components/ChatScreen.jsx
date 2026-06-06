@@ -23,12 +23,16 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
   const [sentRequests, setSentRequests] = useState([]);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const [isChatMenuOpen, setIsChatMenuOpen] = useState(false);
   const [confirmState, setConfirmState] = useState(null);
   const [profileUser, setProfileUser] = useState(null);
   const socketRef = useRef(null);
   const selectedUserRef = useRef(null);
+  const messagesListRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const isPrependingMessagesRef = useRef(false);
 
   const showToast = useCallback((message, type = "success") => {
     setToast({ message, type });
@@ -46,6 +50,7 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
         if (res.data.length === 0) {
           setSelectedUser(null);
           setMessages([]);
+          setHasMoreMessages(false);
         }
       })
       .catch((err) => console.log(err))
@@ -195,6 +200,7 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
 
       if (activeUser?._id === receiverId) {
         setMessages([]);
+        setHasMoreMessages(false);
       }
     });
 
@@ -207,12 +213,18 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
     if (!selectedUser) return;
 
     setIsLoadingMessages(true);
+    setHasMoreMessages(false);
     axios
-      .get(`${process.env.REACT_APP_API_URL}/messages/${selectedUser._id}`, {
+      .get(`${process.env.REACT_APP_API_URL}/messages/${selectedUser._id}?limit=30`, {
         headers: { "x-token": token },
       })
       .then((res) => {
-        setMessages(res.data);
+        const nextMessages = Array.isArray(res.data)
+          ? res.data
+          : res.data.messages || [];
+
+        setMessages(nextMessages);
+        setHasMoreMessages(Boolean(res.data?.hasMore));
         setChatUsers((prev) =>
           prev.map((chatUser) =>
             chatUser._id === selectedUser._id
@@ -227,6 +239,7 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
 
   useEffect(() => {
     if (!selectedUser || isLoadingMessages) return;
+    if (isPrependingMessagesRef.current) return;
 
     const scrollToLatestMessage = () => {
       messagesEndRef.current?.scrollIntoView({
@@ -240,6 +253,80 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
 
     return () => clearTimeout(mediaRenderTimer);
   }, [messages, selectedUser, isLoadingMessages]);
+
+  const loadOlderMessages = useCallback(() => {
+    if (
+      !selectedUser ||
+      !hasMoreMessages ||
+      isLoadingOlderMessages ||
+      isLoadingMessages ||
+      messages.length === 0
+    ) {
+      return;
+    }
+
+    const oldestMessage = messages[0];
+    if (!oldestMessage?.createdAt) return;
+
+    const messagesList = messagesListRef.current;
+    const previousScrollHeight = messagesList?.scrollHeight || 0;
+
+    setIsLoadingOlderMessages(true);
+    isPrependingMessagesRef.current = true;
+
+    axios
+      .get(
+        `${process.env.REACT_APP_API_URL}/messages/${selectedUser._id}?limit=30&before=${encodeURIComponent(
+          oldestMessage.createdAt
+        )}`,
+        { headers: { "x-token": token } }
+      )
+      .then((res) => {
+        const olderMessages = Array.isArray(res.data)
+          ? res.data
+          : res.data.messages || [];
+
+        setHasMoreMessages(Boolean(res.data?.hasMore));
+        setMessages((prev) => {
+          const existingIds = new Set(prev.map((message) => message._id));
+          const uniqueOlderMessages = olderMessages.filter(
+            (message) => !existingIds.has(message._id)
+          );
+
+          return [...uniqueOlderMessages, ...prev];
+        });
+
+        requestAnimationFrame(() => {
+          const nextScrollHeight = messagesList?.scrollHeight || 0;
+
+          if (messagesList) {
+            messagesList.scrollTop = nextScrollHeight - previousScrollHeight;
+          }
+
+          isPrependingMessagesRef.current = false;
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+        isPrependingMessagesRef.current = false;
+      })
+      .finally(() => setIsLoadingOlderMessages(false));
+  }, [
+    hasMoreMessages,
+    isLoadingMessages,
+    isLoadingOlderMessages,
+    messages,
+    selectedUser,
+    token,
+  ]);
+
+  const handleMessagesScroll = useCallback(() => {
+    const messagesList = messagesListRef.current;
+
+    if (!messagesList || messagesList.scrollTop > 80) return;
+
+    loadOlderMessages();
+  }, [loadOlderMessages]);
 
   const sendMessage = (text) => {
     if (!selectedUser) return;
@@ -328,6 +415,7 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
               onClick={() => {
                 setSelectedUser(null);
                 setMessages([]);
+                setHasMoreMessages(false);
               }}
             >
               <img src="/Arrow-left-gray.svg" alt="" />
@@ -368,18 +456,29 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
             </div>
           </div>
 
-          <div className="messages-list">
+          <div
+            className="messages-list"
+            ref={messagesListRef}
+            onScroll={handleMessagesScroll}
+          >
             {isLoadingMessages ? (
               <LoadingSpinner label="Loading messages" />
             ) : (
-              messages.map((message) => (
-                <MessageBox
-                  key={message._id}
-                  message={message}
-                  isOwnMessage={message.sender?._id === user?._id}
-                  onDelete={requestDeleteMessage}
-                />
-              ))
+              <>
+                {isLoadingOlderMessages && (
+                  <div className="older-messages-loader">
+                    <LoadingSpinner label="Loading older messages" />
+                  </div>
+                )}
+                {messages.map((message) => (
+                  <MessageBox
+                    key={message._id}
+                    message={message}
+                    isOwnMessage={message.sender?._id === user?._id}
+                    onDelete={requestDeleteMessage}
+                  />
+                ))}
+              </>
             )}
             <div ref={messagesEndRef} />
           </div>

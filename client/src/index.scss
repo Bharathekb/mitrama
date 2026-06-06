@@ -985,6 +985,21 @@ body {
   padding: 16px;
 }
 
+.older-messages-loader {
+  padding: 4px 0 12px;
+}
+
+.older-messages-loader .loading-state {
+  min-height: 36px;
+  font-size: 12px;
+}
+
+.older-messages-loader .loading-spinner {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
 .message-row {
   display: flex;
   margin-bottom: 10px;

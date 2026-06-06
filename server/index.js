@@ -348,6 +348,9 @@ app.get("/messages/:receiverId", middleware, async (req, res) => {
   try {
     const currentUserId = req.user.id;
     const receiverId = req.params.receiverId;
+    const limit = Math.min(Number(req.query.limit) || 30, 60);
+    const before = req.query.before ? new Date(req.query.before) : null;
+    const hasBeforeDate = before instanceof Date && !Number.isNaN(before.getTime());
 
     const canChat = await Connection.findOne({
       status: "accepted",
@@ -361,26 +364,41 @@ app.get("/messages/:receiverId", middleware, async (req, res) => {
       return res.status(403).send("You can only chat with accepted connections");
     }
 
-    await Message.updateMany(
-      { sender: receiverId, receiver: currentUserId, isRead: false },
-      { $set: { isRead: true, isDelivered: true } }
-    );
+    if (!hasBeforeDate) {
+      await Message.updateMany(
+        { sender: receiverId, receiver: currentUserId, isRead: false },
+        { $set: { isRead: true, isDelivered: true } }
+      );
 
-    io.to(receiverId).emit("chat:messages-read", {
-      readerId: currentUserId,
-    });
+      io.to(receiverId).emit("chat:messages-read", {
+        readerId: currentUserId,
+      });
+    }
 
-    const messages = await Message.find({
+    const messageQuery = {
       $or: [
         { sender: currentUserId, receiver: receiverId },
         { sender: receiverId, receiver: currentUserId },
       ],
-    })
+    };
+
+    if (hasBeforeDate) {
+      messageQuery.createdAt = { $lt: before };
+    }
+
+    const messages = await Message.find(messageQuery)
       .populate("sender", "username email profileImage")
       .populate("receiver", "username email profileImage")
-      .sort({ createdAt: 1 });
+      .sort({ createdAt: -1 })
+      .limit(limit + 1);
 
-    res.json(messages.map(decryptMessagePayload));
+    const hasMore = messages.length > limit;
+    const pageMessages = messages.slice(0, limit).reverse();
+
+    res.json({
+      messages: pageMessages.map(decryptMessagePayload),
+      hasMore,
+    });
   } catch (err) {
     console.log(err);
     res.status(500).send("Server error");
