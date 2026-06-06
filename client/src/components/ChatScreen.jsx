@@ -13,6 +13,12 @@ import ConfirmModal from "./ConfirmModal";
 import ProfilePanel from "./ProfilePanel";
 import UserAvatar from "./UserAvatar";
 
+const toArray = (value) => (Array.isArray(value) ? value : []);
+const getMessagePage = (data) => ({
+  messages: Array.isArray(data) ? data : toArray(data?.messages),
+  hasMore: Boolean(!Array.isArray(data) && data?.hasMore),
+});
+
 const ChatScreen = ({ user, token, onChatActiveChange }) => {
   const [chatUsers, setChatUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -45,9 +51,10 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
         headers: { "x-token": token },
       })
       .then((res) => {
-        setChatUsers(res.data);
+        const nextChatUsers = toArray(res.data);
+        setChatUsers(nextChatUsers);
 
-        if (res.data.length === 0) {
+        if (nextChatUsers.length === 0) {
           setSelectedUser(null);
           setMessages([]);
           setHasMoreMessages(false);
@@ -62,13 +69,13 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
 
     axios
       .get(`${process.env.REACT_APP_API_URL}/connections/pending`, { headers })
-      .then((res) => setIncomingRequests(res.data))
+      .then((res) => setIncomingRequests(toArray(res.data)))
       .catch((err) => console.log(err));
 
     axios
       .get(`${process.env.REACT_APP_API_URL}/users`, { headers })
       .then((res) => {
-        const requestedUsers = res.data.filter((person) => {
+        const requestedUsers = toArray(res.data).filter((person) => {
           return (
             person.connectionStatus === "pending" &&
             person.connectionDirection === "sent"
@@ -87,7 +94,7 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
 
   const updateUserOnlineStatus = useCallback((userId, isOnline) => {
     setChatUsers((prev) =>
-      prev.map((chatUser) =>
+      toArray(prev).map((chatUser) =>
         chatUser._id === userId ? { ...chatUser, isOnline } : chatUser
       )
     );
@@ -101,7 +108,7 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
     if (!senderId) return;
 
     setChatUsers((prev) =>
-      prev.map((chatUser) =>
+      toArray(prev).map((chatUser) =>
         chatUser._id === senderId ? { ...chatUser, unreadCount: 0 } : chatUser
       )
     );
@@ -136,7 +143,7 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
 
       if (isIncomingMessage && activeUser?._id !== senderId) {
         setChatUsers((prev) =>
-          prev.map((chatUser) =>
+          toArray(prev).map((chatUser) =>
             chatUser._id === senderId
               ? { ...chatUser, unreadCount: (chatUser.unreadCount || 0) + 1 }
               : chatUser
@@ -152,7 +159,7 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
 
       if (!belongsToOpenChat) return;
 
-      setMessages((prev) => [...prev, message]);
+      setMessages((prev) => [...toArray(prev), message]);
 
       if (isIncomingMessage) {
         markChatAsRead(senderId);
@@ -164,12 +171,12 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
     });
 
     socketRef.current.on("chat:message-deleted", ({ messageId }) => {
-      setMessages((prev) => prev.filter((message) => message._id !== messageId));
+      setMessages((prev) => toArray(prev).filter((message) => message._id !== messageId));
     });
 
     socketRef.current.on("chat:messages-read", ({ readerId }) => {
       setMessages((prev) =>
-        prev.map((message) =>
+        toArray(prev).map((message) =>
           message.receiver?._id === readerId
             ? { ...message, isRead: true, isDelivered: true }
             : message
@@ -179,7 +186,7 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
 
     socketRef.current.on("chat:messages-delivered", ({ receiverId }) => {
       setMessages((prev) =>
-        prev.map((message) =>
+        toArray(prev).map((message) =>
           message.receiver?._id === receiverId
             ? { ...message, isDelivered: true }
             : message
@@ -219,14 +226,12 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
         headers: { "x-token": token },
       })
       .then((res) => {
-        const nextMessages = Array.isArray(res.data)
-          ? res.data
-          : res.data.messages || [];
+        const messagePage = getMessagePage(res.data);
 
-        setMessages(nextMessages);
-        setHasMoreMessages(Boolean(res.data?.hasMore));
+        setMessages(messagePage.messages);
+        setHasMoreMessages(messagePage.hasMore);
         setChatUsers((prev) =>
-          prev.map((chatUser) =>
+          toArray(prev).map((chatUser) =>
             chatUser._id === selectedUser._id
               ? { ...chatUser, unreadCount: 0 }
               : chatUser
@@ -282,18 +287,17 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
         { headers: { "x-token": token } }
       )
       .then((res) => {
-        const olderMessages = Array.isArray(res.data)
-          ? res.data
-          : res.data.messages || [];
+        const messagePage = getMessagePage(res.data);
 
-        setHasMoreMessages(Boolean(res.data?.hasMore));
+        setHasMoreMessages(messagePage.hasMore);
         setMessages((prev) => {
-          const existingIds = new Set(prev.map((message) => message._id));
-          const uniqueOlderMessages = olderMessages.filter(
+          const currentMessages = toArray(prev);
+          const existingIds = new Set(currentMessages.map((message) => message._id));
+          const uniqueOlderMessages = messagePage.messages.filter(
             (message) => !existingIds.has(message._id)
           );
 
-          return [...uniqueOlderMessages, ...prev];
+          return [...uniqueOlderMessages, ...currentMessages];
         });
 
         requestAnimationFrame(() => {
@@ -470,7 +474,7 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
                     <LoadingSpinner label="Loading older messages" />
                   </div>
                 )}
-                {messages.map((message) => (
+                {toArray(messages).map((message) => (
                   <MessageBox
                     key={message._id}
                     message={message}

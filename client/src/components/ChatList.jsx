@@ -11,6 +11,8 @@ const ChatList = ({
   onOpenFollowers,
   onOpenRequests,
 }) => {
+  const safeUsers = Array.isArray(users) ? users : [];
+
   return (
     <div className="chat-list-screen">
       <div className="chat-list-header">
@@ -20,7 +22,7 @@ const ChatList = ({
             Find
           </button>
           <button type="button" onClick={onOpenFollowers}>
-            Followers {users.length > 0 && <span>{users.length}</span>}
+            Followers {safeUsers.length > 0 && <span>{safeUsers.length}</span>}
           </button>
           <button type="button" onClick={onOpenRequests}>
             Requests {requestCount > 0 && <span>{requestCount}</span>}
@@ -30,9 +32,9 @@ const ChatList = ({
 
       {isLoading && <LoadingSpinner label="Loading chats" />}
 
-      {!isLoading && users.length === 0 && <p>No accepted chats yet</p>}
+      {!isLoading && safeUsers.length === 0 && <p>No accepted chats yet</p>}
 
-      {!isLoading && users.map((chatUser) => (
+      {!isLoading && safeUsers.map((chatUser) => (
         <button
           key={chatUser._id}
           className="chat-user-row"
