@@ -21,26 +21,40 @@ const cors = require("cors");
 
 const app = express();
 const server = http.createServer(app);
+const normalizeOrigin = (origin) =>
+  origin ? origin.trim().replace(/\/$/, "").toLowerCase() : "";
+
 const allowedOrigins = [
+  "https://mitrama.in",
+  "http://mitrama.in",
+  "https://www.mitrama.in",
+  "http://www.mitrama.in",
+  "https://mitrama.netlify.app",
   ...(process.env.CLIENT_URLS || process.env.CLIENT_URL || "")
     .split(",")
-    .map((origin) => origin.trim())
+    .map(normalizeOrigin)
     .filter(Boolean),
   "http://localhost:3000",
 ];
 
 const corsOrigin = (origin, callback) => {
-  if (!origin || allowedOrigins.includes(origin)) {
+  if (!origin || allowedOrigins.includes(normalizeOrigin(origin))) {
     return callback(null, true);
   }
 
   return callback(new Error(`CORS blocked origin: ${origin}`));
 };
 
+const corsOptions = {
+  origin: corsOrigin,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "content-type", "x-token"],
+};
+
 const io = new Server(server, {
   cors: {
     origin: corsOrigin,
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   },
   maxHttpBufferSize: 12 * 1024 * 1024,
 });
@@ -102,13 +116,8 @@ mongoose
 
 // MIDDLEWARES
 app.use(express.json({ limit: "5mb" }));
-app.use(
-  cors({
-    origin: corsOrigin,
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "x-token"],
-  })
-);
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 
 app.get("/", (req, res) => {
   res.send("Mitrama backend is running");
