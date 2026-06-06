@@ -351,7 +351,10 @@ body {
 
 .My-form {
   width: 100%;
-  margin: auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin: 0;
 }
 
 .My-formbtn {
@@ -1631,6 +1634,24 @@ body {
 @media (max-width: 420px) {
   body {
     font-size: 16px;
+  }
+
+  .Chat-heading {
+    margin-top: 26px !important;
+  }
+
+  .My-FormContainer {
+    gap: 18px;
+    padding: 24px 32px 28px;
+  }
+
+  .My-formbtn {
+    margin-top: 8px !important;
+  }
+
+  .privacy-agreement label {
+    font-size: 12px;
+    line-height: 1.35;
   }
 
   .navbar {
