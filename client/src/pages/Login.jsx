@@ -2,6 +2,7 @@ import React, { useState, useContext } from "react";
 import { Link, Navigate } from "react-router-dom";
 import axios from "axios";
 import { store } from "../App";
+import PasswordInput from "../components/PasswordInput";
 
 const Login = () => {
   const [token, setToken] = useContext(store);
@@ -94,8 +95,7 @@ const Login = () => {
               <label className="My-label">
                 Password <span className="My-redstar">*</span>
               </label>
-              <input
-                type="password"
+              <PasswordInput
                 className="form-control"
                 name="password"
                 value={password}

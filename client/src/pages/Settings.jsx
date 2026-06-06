@@ -4,6 +4,7 @@ import axios from "axios";
 import { store } from "../App";
 import LoadingSpinner from "../components/LoadingSpinner";
 import UserAvatar from "../components/UserAvatar";
+import PasswordInput from "../components/PasswordInput";
 
 const Settings = () => {
   const [token, setToken] = useContext(store);
@@ -207,22 +208,19 @@ const Settings = () => {
             <section className="settings-card">
               <h4>Security</h4>
               <form className="settings-form" onSubmit={changePassword}>
-                <input
-                  type="password"
+                <PasswordInput
                   name="currentPassword"
                   placeholder="Current password"
                   value={passwords.currentPassword}
                   onChange={changeHandler}
                 />
-                <input
-                  type="password"
+                <PasswordInput
                   name="password"
                   placeholder="New password"
                   value={passwords.password}
                   onChange={changeHandler}
                 />
-                <input
-                  type="password"
+                <PasswordInput
                   name="confirmpassword"
                   placeholder="Confirm new password"
                   value={passwords.confirmpassword}

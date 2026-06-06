@@ -25,7 +25,7 @@ const FollowersPanel = ({ users, onBack, onSelectUser }) => {
         >
           <img src="/Arrow-left-gray.svg" alt="" />
         </button>
-        <span>Followers</span>
+        <span>Followers ({users.length})</span>
       </div>
 
       <div className="followers-content">

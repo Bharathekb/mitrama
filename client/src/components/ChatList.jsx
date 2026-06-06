@@ -20,7 +20,7 @@ const ChatList = ({
             Find
           </button>
           <button type="button" onClick={onOpenFollowers}>
-            Followers
+            Followers {users.length > 0 && <span>{users.length}</span>}
           </button>
           <button type="button" onClick={onOpenRequests}>
             Requests {requestCount > 0 && <span>{requestCount}</span>}
@@ -41,6 +41,9 @@ const ChatList = ({
           <UserAvatar user={chatUser} />
           <div>
             <span>{chatUser.username}</span>
+            <small className={chatUser.isOnline ? "online" : ""}>
+              {chatUser.isOnline ? "Online" : "Offline"}
+            </small>
           </div>
           <div className="chat-row-meta">
             {chatUser.unreadCount > 0 && (

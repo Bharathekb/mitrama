@@ -6,6 +6,7 @@ const MessageInput = ({ onSend, onSendAudio, onSendMedia }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [mediaPreview, setMediaPreview] = useState(null);
+  const [audioPreview, setAudioPreview] = useState(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const streamRef = useRef(null);
@@ -83,8 +84,8 @@ const MessageInput = ({ onSend, onSendAudio, onSendMedia }) => {
         });
         const reader = new FileReader();
 
-        reader.onloadend = () => {
-          onSendAudio({
+    reader.onloadend = () => {
+          setAudioPreview({
             audioData: reader.result,
             audioMimeType: audioBlob.type,
           });
@@ -142,6 +143,13 @@ const MessageInput = ({ onSend, onSendAudio, onSendMedia }) => {
     setMediaPreview(null);
   };
 
+  const sendAudioPreview = () => {
+    if (!audioPreview) return;
+
+    onSendAudio(audioPreview);
+    setAudioPreview(null);
+  };
+
   return (
     <div className="message-composer">
       {mediaPreview && (
@@ -170,11 +178,42 @@ const MessageInput = ({ onSend, onSendAudio, onSendMedia }) => {
         </div>
       )}
 
+      {audioPreview && (
+        <div className="audio-preview">
+          <div className="audio-preview-main">
+            <span className="audio-preview-icon"></span>
+            <div>
+              <strong>Voice message ready</strong>
+              <audio controls src={audioPreview.audioData}>
+                <source
+                  src={audioPreview.audioData}
+                  type={audioPreview.audioMimeType}
+                />
+              </audio>
+            </div>
+          </div>
+          <div className="media-preview-actions">
+            <span>Review before sending</span>
+            <button type="button" onClick={() => setAudioPreview(null)}>
+              Cancel
+            </button>
+            <button type="button" onClick={sendAudioPreview}>
+              Send
+            </button>
+          </div>
+        </div>
+      )}
+
       {isRecording && (
         <div className="recording-banner">
-          <span className="recording-pulse"></span>
-          <span>Recording...</span>
-          <strong>{formatRecordingTime(recordingSeconds)}</strong>
+          <div className="recording-status">
+            <span className="recording-pulse"></span>
+            <span>Recording</span>
+            <strong>{formatRecordingTime(recordingSeconds)}</strong>
+          </div>
+          <button type="button" className="recording-stop-btn" onClick={stopRecording}>
+            Stop
+          </button>
         </div>
       )}
 
@@ -213,7 +252,7 @@ const MessageInput = ({ onSend, onSendAudio, onSendMedia }) => {
           aria-label={isRecording ? "Stop recording" : "Record voice message"}
           onClick={handleRecordClick}
         >
-          <img src="/mic.svg" alt="" />
+          {isRecording ? <span className="stop-icon"></span> : <img src="/mic.svg" alt="" />}
         </button>
         <button type="submit" aria-label="Send message">
           <img src="/send-icon.svg" alt="" />

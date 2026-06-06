@@ -29,6 +29,30 @@ const io = new Server(server, {
   maxHttpBufferSize: 12 * 1024 * 1024,
 });
 
+const onlineUsers = new Map();
+
+const isUserOnline = (userId) => {
+  return onlineUsers.has(userId.toString());
+};
+
+const addOnlineUser = (userId) => {
+  const key = userId.toString();
+  onlineUsers.set(key, (onlineUsers.get(key) || 0) + 1);
+};
+
+const removeOnlineUser = (userId) => {
+  const key = userId.toString();
+  const connectionCount = onlineUsers.get(key) || 0;
+
+  if (connectionCount <= 1) {
+    onlineUsers.delete(key);
+    return true;
+  }
+
+  onlineUsers.set(key, connectionCount - 1);
+  return false;
+};
+
 const migratePlainTextPasswords = async () => {
   try {
     const users = await Registeruser.find({
@@ -291,6 +315,7 @@ app.get("/chat-users", middleware, async (req, res) => {
       return {
         ...userObject,
         unreadCount: unreadCountMap[chatUser._id.toString()] || 0,
+        isOnline: isUserOnline(chatUser._id),
       };
     });
 
@@ -334,7 +359,7 @@ app.get("/messages/:receiverId", middleware, async (req, res) => {
 
     await Message.updateMany(
       { sender: receiverId, receiver: currentUserId, isRead: false },
-      { $set: { isRead: true } }
+      { $set: { isRead: true, isDelivered: true } }
     );
 
     io.to(receiverId).emit("chat:messages-read", {
@@ -377,7 +402,7 @@ app.put("/messages/:senderId/read", middleware, async (req, res) => {
 
     await Message.updateMany(
       { sender: senderId, receiver: currentUserId, isRead: false },
-      { $set: { isRead: true } }
+      { $set: { isRead: true, isDelivered: true } }
     );
 
     io.to(senderId).emit("chat:messages-read", {
@@ -409,6 +434,41 @@ io.use((socket, next) => {
 
 io.on("connection", async (socket) => {
   socket.join(socket.userId);
+  const wasOffline = !isUserOnline(socket.userId);
+  addOnlineUser(socket.userId);
+
+  if (wasOffline) {
+    socket.broadcast.emit("user:online", { userId: socket.userId });
+  }
+
+  const deliveredMessages = await Message.aggregate([
+    {
+      $match: {
+        receiver: new mongoose.Types.ObjectId(socket.userId),
+        isDelivered: false,
+      },
+    },
+    {
+      $group: {
+        _id: "$sender",
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  if (deliveredMessages.length > 0) {
+    await Message.updateMany(
+      { receiver: socket.userId, isDelivered: false },
+      { $set: { isDelivered: true } }
+    );
+
+    deliveredMessages.forEach((item) => {
+      io.to(item._id.toString()).emit("chat:messages-delivered", {
+        receiverId: socket.userId,
+      });
+    });
+  }
+
   console.log("Socket connected:", socket.id);
 
   socket.on("chat:send", async ({
@@ -466,6 +526,7 @@ io.on("connection", async (socket) => {
       mediaData: hasMedia ? mediaData : undefined,
       mediaMimeType: hasMedia ? mediaMimeType : undefined,
       mediaName: hasMedia ? mediaName : undefined,
+      isDelivered: isUserOnline(receiverId),
     });
 
     const populatedMessage = await message.populate([
@@ -580,6 +641,12 @@ app.put("/change-password", middleware, async (req, res) => {
   });
 
   socket.on("disconnect", () => {
+    const isNowOffline = removeOnlineUser(socket.userId);
+
+    if (isNowOffline) {
+      socket.broadcast.emit("user:offline", { userId: socket.userId });
+    }
+
     console.log("Socket disconnected:", socket.id);
   });
 });
@@ -652,6 +719,49 @@ app.put("/connections/accept/:connectionId", middleware, async (req, res) => {
     }
 
     res.json(connection);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server error");
+  }
+});
+
+app.delete("/connections/request/:receiverId", middleware, async (req, res) => {
+  try {
+    const connection = await Connection.findOneAndDelete({
+      requester: req.user.id,
+      receiver: req.params.receiverId,
+      status: "pending",
+    });
+
+    if (!connection) {
+      return res.status(404).send("Request not found");
+    }
+
+    res.send("Request cancelled");
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Server error");
+  }
+});
+
+app.delete("/connections/:userId", middleware, async (req, res) => {
+  try {
+    const currentUserId = req.user.id;
+    const userId = req.params.userId;
+
+    const connection = await Connection.findOneAndDelete({
+      status: "accepted",
+      $or: [
+        { requester: currentUserId, receiver: userId },
+        { requester: userId, receiver: currentUserId },
+      ],
+    });
+
+    if (!connection) {
+      return res.status(404).send("Accepted connection not found");
+    }
+
+    res.send("Unfollowed successfully");
   } catch (err) {
     console.log(err);
     res.status(500).send("Server error");

@@ -7,10 +7,13 @@ import ChatScreen from "../components/ChatScreen";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 const Main = () => {
-  const [token] = useContext(store);
+  const [token, setToken] = useContext(store);
   const [data, setData] = useState(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   useEffect(() => {
+    if (!token) return;
+
     axios
       .get(`${process.env.REACT_APP_API_URL}/main`, {
         headers: {
@@ -18,8 +21,11 @@ const Main = () => {
         },
       })
       .then((res) => setData(res.data))
-      .catch((err) => console.log(err));
-  }, [token]);
+      .catch(() => {
+        localStorage.removeItem("token");
+        setToken(null);
+      });
+  }, [setToken, token]);
   if (!token) {
     return <Navigate to="/" />;
   }
@@ -34,8 +40,8 @@ const Main = () => {
 
   return (
    <div className="Main-container">
-  <Header user={data} />
-  <ChatScreen user={data} token={token} />
+  {!isChatOpen && <Header user={data} />}
+  <ChatScreen user={data} token={token} onChatActiveChange={setIsChatOpen} />
 </div>
   );
 };

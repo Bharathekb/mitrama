@@ -13,7 +13,7 @@ import ConfirmModal from "./ConfirmModal";
 import ProfilePanel from "./ProfilePanel";
 import UserAvatar from "./UserAvatar";
 
-const ChatScreen = ({ user, token }) => {
+const ChatScreen = ({ user, token, onChatActiveChange }) => {
   const [chatUsers, setChatUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -80,6 +80,18 @@ const ChatScreen = ({ user, token }) => {
     loadRequests();
   }, [loadChatUsers, loadRequests]);
 
+  const updateUserOnlineStatus = useCallback((userId, isOnline) => {
+    setChatUsers((prev) =>
+      prev.map((chatUser) =>
+        chatUser._id === userId ? { ...chatUser, isOnline } : chatUser
+      )
+    );
+
+    setSelectedUser((prev) =>
+      prev?._id === userId ? { ...prev, isOnline } : prev
+    );
+  }, []);
+
   const markChatAsRead = useCallback((senderId) => {
     if (!senderId) return;
 
@@ -100,7 +112,8 @@ const ChatScreen = ({ user, token }) => {
 
   useEffect(() => {
     selectedUserRef.current = selectedUser;
-  }, [selectedUser]);
+    onChatActiveChange?.(Boolean(selectedUser));
+  }, [onChatActiveChange, selectedUser]);
 
   useEffect(() => {
     loadChatUsers();
@@ -153,10 +166,28 @@ const ChatScreen = ({ user, token }) => {
       setMessages((prev) =>
         prev.map((message) =>
           message.receiver?._id === readerId
-            ? { ...message, isRead: true }
+            ? { ...message, isRead: true, isDelivered: true }
             : message
         )
       );
+    });
+
+    socketRef.current.on("chat:messages-delivered", ({ receiverId }) => {
+      setMessages((prev) =>
+        prev.map((message) =>
+          message.receiver?._id === receiverId
+            ? { ...message, isDelivered: true }
+            : message
+        )
+      );
+    });
+
+    socketRef.current.on("user:online", ({ userId }) => {
+      updateUserOnlineStatus(userId, true);
+    });
+
+    socketRef.current.on("user:offline", ({ userId }) => {
+      updateUserOnlineStatus(userId, false);
     });
 
     socketRef.current.on("chat:cleared", ({ receiverId }) => {
@@ -170,7 +201,7 @@ const ChatScreen = ({ user, token }) => {
     return () => {
       socketRef.current.disconnect();
     };
-  }, [loadChatUsers, loadRequests, markChatAsRead, showToast, token, user?._id]);
+  }, [loadChatUsers, loadRequests, markChatAsRead, showToast, token, updateUserOnlineStatus, user?._id]);
 
   useEffect(() => {
     if (!selectedUser) return;
@@ -302,7 +333,12 @@ const ChatScreen = ({ user, token }) => {
               <img src="/Arrow-left-gray.svg" alt="" />
             </button>
             <UserAvatar user={selectedUser} />
-            <span>{selectedUser.username}</span>
+            <div className="chat-title-user">
+              <span>{selectedUser.username}</span>
+              <small className={selectedUser.isOnline ? "online" : ""}>
+                {selectedUser.isOnline ? "Online" : "Offline"}
+              </small>
+            </div>
             <div className="chat-title-actions">
               <button
                 type="button"

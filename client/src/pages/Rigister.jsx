@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import PasswordInput from "../components/PasswordInput";
 
 const Register = () => {
   const [data, setData] = useState({
@@ -123,8 +124,7 @@ const Register = () => {
               <label className="My-label">
                 Password <span className="My-redstar">*</span>
               </label>
-              <input
-                type="password"
+              <PasswordInput
                 className="form-control"
                 name="password"
                 value={password}
@@ -139,8 +139,7 @@ const Register = () => {
               <label className="My-label">
                 Confirm Password <span className="My-redstar">*</span>
               </label>
-              <input
-                type="password"
+              <PasswordInput
                 className="form-control"
                 name="confirmpassword"
                 value={confirmpassword}

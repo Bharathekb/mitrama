@@ -2,24 +2,30 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import LoadingSpinner from "./LoadingSpinner";
 import UserAvatar from "./UserAvatar";
+import ConfirmModal from "./ConfirmModal";
 
 const PeoplePanel = ({ token, onBack, onNotify, onChanged }) => {
     const [users, setUsers] = useState([]);
     const [searchText, setSearchText] = useState("");
     const [isLoading, setIsLoading] = useState(true);
+    const [confirmUnfollow, setConfirmUnfollow] = useState(null);
+    const [confirmCancelRequest, setConfirmCancelRequest] = useState(null);
 
     const headers = useMemo(() => ({ "x-token": token }), [token]);
 
     const getFollowButtonText = (person) => {
-        if (person.connectionStatus === "accepted") return "Following";
+        if (person.connectionStatus === "accepted") return "Unfollow";
         if (person.connectionStatus === "pending") {
-            return person.connectionDirection === "sent" ? "Requested" : "Respond";
+            return person.connectionDirection === "sent" ? "Undo" : "Respond";
         }
         return "Follow";
     };
 
     const isFollowDisabled = (person) => {
-        return Boolean(person.connectionStatus);
+        return (
+            person.connectionStatus === "pending" &&
+            person.connectionDirection !== "sent"
+        );
     };
 
     const filteredUsers = users.filter((person) => {
@@ -62,6 +68,40 @@ const PeoplePanel = ({ token, onBack, onNotify, onChanged }) => {
             });
     };
 
+    const cancelRequest = (person) => {
+        axios
+            .delete(`${process.env.REACT_APP_API_URL}/connections/request/${person._id}`, {
+                headers,
+            })
+            .then((res) => {
+                onNotify(res.data || "Request cancelled", "success");
+                setConfirmCancelRequest(null);
+                loadData();
+                onChanged();
+            })
+            .catch((err) => {
+                setConfirmCancelRequest(null);
+                onNotify(err.response?.data || "Could not cancel request", "error");
+            });
+    };
+
+    const unfollowUser = (person) => {
+        axios
+            .delete(`${process.env.REACT_APP_API_URL}/connections/${person._id}`, {
+                headers,
+            })
+            .then((res) => {
+                onNotify(res.data || "Unfollowed", "success");
+                setConfirmUnfollow(null);
+                loadData();
+                onChanged();
+            })
+            .catch((err) => {
+                setConfirmUnfollow(null);
+                onNotify(err.response?.data || "Could not unfollow", "error");
+            });
+    };
+
     return (
         <div className="people-screen">
             <div className="chat-title">
@@ -99,13 +139,56 @@ const PeoplePanel = ({ token, onBack, onNotify, onChanged }) => {
                         </div>
                         <button
                             disabled={isFollowDisabled(person)}
-                            onClick={() => sendRequest(person._id)}
+                            className={
+                                person.connectionStatus === "accepted" ||
+                                person.connectionDirection === "sent"
+                                    ? "danger-lite"
+                                    : ""
+                            }
+                            onClick={() => {
+                                if (person.connectionStatus === "accepted") {
+                                    setConfirmUnfollow(person);
+                                    return;
+                                }
+
+                                if (
+                                    person.connectionStatus === "pending" &&
+                                    person.connectionDirection === "sent"
+                                ) {
+                                    setConfirmCancelRequest(person);
+                                    return;
+                                }
+
+                                sendRequest(person._id);
+                            }}
                         >
                             {getFollowButtonText(person)}
                         </button>
                     </div>
                 ))}
             </div>
+
+            {confirmUnfollow && (
+                <ConfirmModal
+                    title="Unfollow user?"
+                    message={`You will no longer be able to chat with ${confirmUnfollow.username}.`}
+                    confirmText="Unfollow"
+                    danger
+                    onConfirm={() => unfollowUser(confirmUnfollow)}
+                    onCancel={() => setConfirmUnfollow(null)}
+                />
+            )}
+
+            {confirmCancelRequest && (
+                <ConfirmModal
+                    title="Undo request?"
+                    message={`Cancel your follow request to ${confirmCancelRequest.username}?`}
+                    confirmText="Undo"
+                    danger
+                    onConfirm={() => cancelRequest(confirmCancelRequest)}
+                    onCancel={() => setConfirmCancelRequest(null)}
+                />
+            )}
         </div>
     );
 };

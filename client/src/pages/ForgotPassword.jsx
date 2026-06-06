@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+import PasswordInput from "../components/PasswordInput";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -76,8 +77,7 @@ const ForgotPassword = () => {
           <div className="My-Formbox">
             <div className="My-form-group w-100">
               <label className="My-label">New Password</label>
-              <input
-                type="password"
+              <PasswordInput
                 className="form-control"
                 name="password"
                 value={data.password}
@@ -90,8 +90,7 @@ const ForgotPassword = () => {
           <div className="My-Formbox">
             <div className="My-form-group w-100">
               <label className="My-label">Confirm Password</label>
-              <input
-                type="password"
+              <PasswordInput
                 className="form-control"
                 name="confirmpassword"
                 value={data.confirmpassword}
