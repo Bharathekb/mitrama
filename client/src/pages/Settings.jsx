@@ -5,6 +5,7 @@ import { store } from "../App";
 import LoadingSpinner from "../components/LoadingSpinner";
 import UserAvatar from "../components/UserAvatar";
 import PasswordInput from "../components/PasswordInput";
+import ConfirmModal from "../components/ConfirmModal";
 
 const Settings = () => {
   const [token, setToken] = useContext(store);
@@ -18,6 +19,8 @@ const Settings = () => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isUploadingProfileImage, setIsUploadingProfileImage] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -42,18 +45,15 @@ const Settings = () => {
   };
 
   const deleteAccount = () => {
-    const confirmed = window.confirm(
-      "Delete your account permanently? This cannot be undone."
-    );
-
-    if (!confirmed) return;
-
     axios
       .delete(`${process.env.REACT_APP_API_URL}/delete-account`, {
         headers: { "x-token": token },
       })
       .then(() => logout())
-      .catch((err) => setError(err.response?.data || "Could not delete account"));
+      .catch((err) => {
+        setShowDeleteConfirm(false);
+        setError(err.response?.data || "Could not delete account");
+      });
   };
 
   const clearLocalData = () => {
@@ -236,12 +236,33 @@ const Settings = () => {
             <section className="settings-card">
               <h4>Account</h4>
               <button onClick={clearLocalData}>Clear local data</button>
-              <button onClick={logout}>Logout</button>
-              <button className="danger" onClick={deleteAccount}>
+              <button onClick={() => setShowLogoutConfirm(true)}>Logout</button>
+              <button className="danger" onClick={() => setShowDeleteConfirm(true)}>
                 Delete account
               </button>
             </section>
           </div>
+
+          {showLogoutConfirm && (
+            <ConfirmModal
+              title="Logout?"
+              message="Are you sure you want to logout from Mitrama?"
+              confirmText="Logout"
+              danger
+              onConfirm={logout}
+              onCancel={() => setShowLogoutConfirm(false)}
+            />
+          )}
+          {showDeleteConfirm && (
+            <ConfirmModal
+              title="Delete account?"
+              message="This will permanently delete your account. This cannot be undone."
+              confirmText="Delete"
+              danger
+              onConfirm={deleteAccount}
+              onCancel={() => setShowDeleteConfirm(false)}
+            />
+          )}
         </div>
       )}
     </div>

@@ -13,6 +13,10 @@ const {
   verifyPassword,
   isHashedPassword,
 } = require("./authUtils");
+const {
+  encryptMessagePayload,
+  decryptMessagePayload,
+} = require("./messageCrypto");
 const cors = require("cors");
 
 const app = express();
@@ -376,7 +380,7 @@ app.get("/messages/:receiverId", middleware, async (req, res) => {
       .populate("receiver", "username email profileImage")
       .sort({ createdAt: 1 });
 
-    res.json(messages);
+    res.json(messages.map(decryptMessagePayload));
   } catch (err) {
     console.log(err);
     res.status(500).send("Server error");
@@ -508,7 +512,7 @@ io.on("connection", async (socket) => {
       );
     }
 
-    const message = await Message.create({
+    const message = await Message.create(encryptMessagePayload({
       sender: socket.userId,
       receiver: receiverId,
       type: hasAudio
@@ -527,15 +531,17 @@ io.on("connection", async (socket) => {
       mediaMimeType: hasMedia ? mediaMimeType : undefined,
       mediaName: hasMedia ? mediaName : undefined,
       isDelivered: isUserOnline(receiverId),
-    });
+    }));
 
     const populatedMessage = await message.populate([
       { path: "sender", select: "username email profileImage" },
       { path: "receiver", select: "username email profileImage" },
     ]);
 
-    io.to(socket.userId).emit("chat:new-message", populatedMessage);
-    io.to(receiverId).emit("chat:new-message", populatedMessage);
+    const decryptedMessage = decryptMessagePayload(populatedMessage);
+
+    io.to(socket.userId).emit("chat:new-message", decryptedMessage);
+    io.to(receiverId).emit("chat:new-message", decryptedMessage);
   } catch (err) {
     console.log("Message error:", err);
     socket.emit("chat:error", "Could not send message");

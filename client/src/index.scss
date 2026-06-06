@@ -174,10 +174,37 @@ body {
   object-fit: contain;
 }
 
+.auth-logo-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 44px;
+  margin-bottom: 4px;
+}
+
+.auth-logo-wrap img {
+  display: block;
+  width: auto;
+  height: 46px;
+  object-fit: contain;
+}
+
+.auth-logo-wrap span {
+  color: #18181b;
+  font-size: 18px;
+  font-weight: 800;
+}
+
 .header-actions {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.nav-item.dropdown {
+  position: relative;
 }
 
 .profile-box {
@@ -242,12 +269,17 @@ body {
 }
 
 .app-dropdown-menu {
+  position: absolute !important;
+  top: calc(100% + 8px) !important;
+  right: 0 !important;
+  left: auto !important;
   min-width: 210px;
   padding: 8px;
   border: 1px solid #e4e4e7;
   border-radius: 12px;
   background: #fff;
   box-shadow: rgba(0, 0, 0, 0.14) 0 12px 32px;
+  z-index: 1400;
 }
 
 .app-dropdown-menu li {
@@ -1640,6 +1672,14 @@ body {
     margin-top: 26px !important;
   }
 
+  .auth-logo-wrap {
+    margin-top: 28px;
+  }
+
+  .auth-logo-wrap img {
+    height: 40px;
+  }
+
   .My-FormContainer {
     gap: 18px;
     padding: 24px 32px 28px;
@@ -1692,6 +1732,7 @@ body {
 
   .app-dropdown-menu {
     min-width: 190px;
+    top: calc(100% + 6px) !important;
   }
 
   .chat-title {

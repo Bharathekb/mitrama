@@ -55,9 +55,10 @@ const ForgotPassword = () => {
   return (
     <div className="Main-container">
       <form className="My-form" onSubmit={submitHandler}>
-        <h1 className="Chat-heading Heading-3 text-center mb-0 mt-5">
-          Reset Password
-        </h1>
+        <div className="auth-logo-wrap">
+          <img src="/Mitrama-logo.png" alt="Mitrama" />
+          <span>Reset Password</span>
+        </div>
 
         <div className="My-FormContainer">
           <div className="My-Formbox">
