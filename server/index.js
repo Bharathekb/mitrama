@@ -301,18 +301,26 @@ app.post("/forgot-password", async (req, res) => {
 });
 app.get("/chat-users", middleware, async (req, res) => {
   try {
+    const currentUserId = req.user.id.toString();
     const connections = await Connection.find({
       status: "accepted",
       $or: [{ requester: req.user.id }, { receiver: req.user.id }],
     })
       .populate("requester", "username email profileImage")
-      .populate("receiver", "username email profileImage");
+      .populate("receiver", "username email profileImage")
+      .lean();
 
-    const users = connections.map((connection) => {
-      return connection.requester._id.toString() === req.user.id.toString()
-  ? connection.receiver
-  : connection.requester;
-    });
+    const users = connections
+      .map((connection) => {
+        const requesterId = connection.requester?._id?.toString();
+        const receiverId = connection.receiver?._id?.toString();
+
+        if (requesterId === currentUserId) return connection.receiver;
+        if (receiverId === currentUserId) return connection.requester;
+
+        return null;
+      })
+      .filter(Boolean);
 
     const unreadCounts = await Message.aggregate([
       {
@@ -335,10 +343,8 @@ app.get("/chat-users", middleware, async (req, res) => {
     }, {});
 
     const usersWithUnreadCounts = users.map((chatUser) => {
-      const userObject = chatUser.toObject();
-
       return {
-        ...userObject,
+        ...chatUser,
         unreadCount: unreadCountMap[chatUser._id.toString()] || 0,
         isOnline: isUserOnline(chatUser._id),
       };

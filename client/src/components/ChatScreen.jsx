@@ -52,13 +52,9 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
       })
       .then((res) => {
         const nextChatUsers = toArray(res.data);
-        setChatUsers(nextChatUsers);
-
-        if (nextChatUsers.length === 0) {
-          setSelectedUser(null);
-          setMessages([]);
-          setHasMoreMessages(false);
-        }
+        setChatUsers((prev) =>
+          nextChatUsers.length > 0 ? nextChatUsers : toArray(prev)
+        );
       })
       .catch((err) => console.log(err))
       .finally(() => setIsLoadingChats(false));
@@ -75,14 +71,41 @@ const ChatScreen = ({ user, token, onChatActiveChange }) => {
     axios
       .get(`${process.env.REACT_APP_API_URL}/users`, { headers })
       .then((res) => {
-        const requestedUsers = toArray(res.data).filter((person) => {
+        const people = toArray(res.data);
+        const requestedUsers = people.filter((person) => {
           return (
             person.connectionStatus === "pending" &&
             person.connectionDirection === "sent"
           );
         });
+        const acceptedUsers = people
+          .filter((person) => person.connectionStatus === "accepted")
+          .map((person) => ({
+            ...person,
+            unreadCount: person.unreadCount || 0,
+            isOnline: Boolean(person.isOnline),
+          }));
 
         setSentRequests(requestedUsers);
+        setChatUsers((prev) => {
+          const existingUsers = toArray(prev);
+
+          if (acceptedUsers.length === 0) {
+            return [];
+          }
+
+          const usersById = new Map();
+
+          acceptedUsers.forEach((person) => usersById.set(person._id, person));
+          existingUsers.forEach((person) => {
+            usersById.set(person._id, {
+              ...usersById.get(person._id),
+              ...person,
+            });
+          });
+
+          return Array.from(usersById.values());
+        });
       })
       .catch((err) => console.log(err));
   }, [token]);
